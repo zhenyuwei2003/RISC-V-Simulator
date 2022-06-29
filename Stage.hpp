@@ -35,10 +35,13 @@ namespace STAGE
             if(Buffer.InsType == INSTRUCTION::NOP) { NOPFlag = true; MEMORY::DEBUGprintf("\n[IF] NOP"); return; }
 
             NOPFlag = false;
-            if(!INSTRUCTION::IsJump(Buffer.InsType) && !INSTRUCTION::IsBranch(Buffer.InsType))
-                pcNew = pc + 4;
-            else
-                pcNew = pc + 4; // predictPC TODO
+            if(pcNew == -1)
+            {
+                if(!INSTRUCTION::IsJump(Buffer.InsType) && !INSTRUCTION::IsBranch(Buffer.InsType))
+                    pcNew = pc + 4;
+                else
+                    pcNew = pc + 4; // predictPC TODO
+            }
         }
     };
 
@@ -364,7 +367,6 @@ namespace STAGE
 
         void execute()
         {
-            if(StopFlag) ++StopFlag;
             if(preBuffer.InsType == INSTRUCTION::NOP) { NOPFlag = true; MEMORY::DEBUGprintf("\n[WB] NOP"); return; }
             if(Stall) { --Stall; NOPFlag = true; MEMORY::DEBUGprintf("\n[WB] Stall"); return; }
 

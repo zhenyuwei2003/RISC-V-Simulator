@@ -72,12 +72,13 @@ namespace CPU
                 printf("StopFlag: %d", StopFlag);
 #endif
 
-                MEM.execute();
                 WB.execute();
                 EX.execute();
+                MEM.execute();
                 IF.execute();
                 ID.execute();
-                
+                if(StopFlag) ++StopFlag;
+
 #ifdef RISC_V_DEBUG
                 printf("\n--------------------\n");
                 printf("\n[Register]");
@@ -87,7 +88,7 @@ namespace CPU
                 printf("\n");
 #endif
 
-                if(StopFlag == 5) break;
+                if(StopFlag >= 5) break;
 
                 if(pcNew != -1) pc = pcNew, pcNew = -1;
                 if(StallFlag)
