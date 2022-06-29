@@ -9,7 +9,7 @@ using std::string;
 using std::istream;
 using u32 = unsigned int;
 
-const u32 SIZE = 200000;
+const u32 SIZE = 1048576;
 
 //#define RISC_V_DEBUG
 

@@ -7,7 +7,7 @@ namespace BUFFER
 {
     struct IF_Buffer
     {
-        int pc = 0;
+        u32 pc = 0;
         INSTRUCTION::INS_TYPE InsType = INSTRUCTION::NOP;
         u32 rd = 0;
         u32 imm = 0;
@@ -25,7 +25,7 @@ namespace BUFFER
 
     struct ID_Buffer
     {
-        int pc = 0;
+        u32 pc = 0;
         INSTRUCTION::INS_TYPE InsType = INSTRUCTION::NOP;
         u32 rd = 0;
         u32 imm = 0;
@@ -44,7 +44,7 @@ namespace BUFFER
 
     struct EX_Buffer
     {
-        int pc = 0;
+        u32 pc = 0;
         INSTRUCTION::INS_TYPE InsType = INSTRUCTION::NOP;
         u32 rd = 0;
         u32 exr = 0; // Execute Result
@@ -60,7 +60,7 @@ namespace BUFFER
 
     struct MEM_Buffer
     {
-        int pc = 0;
+        u32 pc = 0;
         INSTRUCTION::INS_TYPE InsType = INSTRUCTION::NOP;
         u32 rd = 0;
         u32 exr = 0;
@@ -74,7 +74,7 @@ namespace BUFFER
 
     struct WB_Buffer
     {
-        int pc = 0;
+        u32 pc = 0;
         INSTRUCTION::INS_TYPE InsType = INSTRUCTION::NOP;
         u32 rd = 0;
         u32 exr = 0;

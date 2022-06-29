@@ -3,10 +3,20 @@
 
 #include <iostream>
 
+using std::string;
 using u32 = unsigned int;
 
 namespace INSTRUCTION
 {
+    const string InsTable[] = // NOLINT
+    {
+        "NOP", "ADD", "ADDI", "AND", "ANDI", "AUIPC", "BEQ", "BGE",
+        "BGEU", "BLT", "BLTU", "BNE", "JAL", "JALR", "LB", "LBU",
+        "LH", "LHU", "LUI", "LW", "OR", "ORI", "SB", "SH",
+        "SLL", "SLLI", "SLT", "SLTI", "SLTIU", "SLTU", "SRA", "SRAI",
+        "SRL", "SRLI", "SUB", "SW", "XOR", "XORI"
+    };
+
     enum INS_TYPE
     {
         NOP,

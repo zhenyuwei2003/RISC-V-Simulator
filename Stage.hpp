@@ -4,6 +4,7 @@
 #include "Buffer.hpp"
 #include "Memory.hpp"
 #include "Register.hpp"
+#include "Predictor.hpp"
 
 namespace STAGE
 {
@@ -12,13 +13,14 @@ namespace STAGE
     public:
         BUFFER::IF_Buffer Buffer;
         MEMORY::Memory &Mem;
+        PREDICTOR::Predictor &Pred;
         int &pc, &pcNext;
         u32 &Stall;
         u32 &StopFlag;
         bool NOPFlag;
 
-        explicit stageIF(MEMORY::Memory &Mem_param, int &pc_param, int &pcNext_param, u32 &Stall_param, u32 &StopFlag_param)
-            : Mem(Mem_param), pc(pc_param), pcNext(pcNext_param), Stall(Stall_param), StopFlag(StopFlag_param), NOPFlag(false) {}
+        explicit stageIF(MEMORY::Memory &Mem_param, PREDICTOR::Predictor &Pred_param, int &pc_param, int &pcNext_param, u32 &Stall_param, u32 &StopFlag_param)
+            : Mem(Mem_param), Pred(Pred_param), pc(pc_param), pcNext(pcNext_param), Stall(Stall_param), StopFlag(StopFlag_param), NOPFlag(false) {}
 
         void execute()
         {
@@ -43,8 +45,8 @@ namespace STAGE
                 }
                 else
                 {
-                    pcNext = pc + 4; // predictPC TODO
-                    Buffer.pcPredict = pc + 4;
+                    pcNext = Pred.NextPredict(pc); // predictPC TODO
+                    Buffer.pcPredict = pcNext;
                 }
             }
 
@@ -292,14 +294,15 @@ namespace STAGE
         BUFFER::EX_Buffer &preBuffer;
         BUFFER::MEM_Buffer Buffer;
         MEMORY::Memory &Mem;
+        PREDICTOR::Predictor &Pred;
         int &pcNext;
         u32 &Stall;
         u32 &StopFlag;
         bool &IF_ID_EX_ClearFlag;
         bool NOPFlag;
 
-        explicit stageMEM(MEMORY::Memory &Mem_param, BUFFER::EX_Buffer &preBuffer_param, int &pcNext_param, u32 &Stall_param, u32 &StopFlag_param, bool &IF_ID_EX_ClearFlag_param)
-            : preBuffer(preBuffer_param), Mem(Mem_param), pcNext(pcNext_param), Stall(Stall_param), StopFlag(StopFlag_param), IF_ID_EX_ClearFlag(IF_ID_EX_ClearFlag_param), NOPFlag(false) {}
+        explicit stageMEM(MEMORY::Memory &Mem_param, PREDICTOR::Predictor &Pred_param, BUFFER::EX_Buffer &preBuffer_param, int &pcNext_param, u32 &Stall_param, u32 &StopFlag_param, bool &IF_ID_EX_ClearFlag_param)
+            : preBuffer(preBuffer_param), Mem(Mem_param), Pred(Pred_param), pcNext(pcNext_param), Stall(Stall_param), StopFlag(StopFlag_param), IF_ID_EX_ClearFlag(IF_ID_EX_ClearFlag_param), NOPFlag(false) {}
 
         void execute()
         {
@@ -350,9 +353,10 @@ namespace STAGE
                 case INSTRUCTION::BNE:
                 case INSTRUCTION::JAL:
                 case INSTRUCTION::JALR:
+                    Pred.Update(Buffer.pc, preBuffer.pcPredict);
                     if(preBuffer.pcPredict != Buffer.pc)
                     {
-                        pcNext = Buffer.pc;
+                        pcNext = (int)Buffer.pc;
                         IF_ID_EX_ClearFlag = true;
                         StopFlag = 0;
                     }
@@ -418,6 +422,7 @@ namespace STAGE
                 case INSTRUCTION::JALR:
                     Reg.Store(preBuffer.rd, preBuffer.exr);
                     break;
+                default: break;
             }
         }
     };

@@ -3,27 +3,6 @@
 
 #include "Stage.hpp"
 
-#ifdef RISC_V_DEBUG
-
-string InsTable[100] =
-{
-    "NOP", "ADD", "ADDI", "AND", "ANDI", "AUIPC", "BEQ", "BGE",
-    "BGEU", "BLT", "BLTU", "BNE", "JAL", "JALR", "LB", "LBU",
-    "LH", "LHU", "LUI", "LW", "OR", "ORI", "SB", "SH",
-    "SLL", "SLLI", "SLT", "SLTI", "SLTIU", "SLTU", "SRA", "SRAI",
-    "SRL", "SRLI", "SUB", "SW", "XOR", "XORI"
-};
-
-string RegTable[100] =
-{
-    "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
-    "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
-    "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
-    "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
-};
-
-#endif
-
 namespace CPU
 {
     class CPU
@@ -31,11 +10,11 @@ namespace CPU
     private:
         MEMORY::Memory Mem;
         REGISTER::Register Reg;
+        PREDICTOR::Predictor Pred;
+
         int pc, pcNext;
-        u32 StopFlag;
-        u32 Stall[6];
-        bool IF_ID_EX_ClearFlag;
-        bool StallFlag;
+        u32 StopFlag, Stall[6];
+        bool IF_ID_EX_ClearFlag, StallFlag;
 
         STAGE::stageIF IF;
         STAGE::stageID ID;
@@ -52,10 +31,10 @@ namespace CPU
     public:
         explicit CPU(istream &InputStream)
             : Mem(InputStream), pc(0), pcNext(-1), StopFlag(false), IF_ID_EX_ClearFlag(false), StallFlag(false),
-              IF(Mem, pc, pcNext, Stall[1], StopFlag),
+              IF(Mem, Pred, pc, pcNext, Stall[1], StopFlag),
               ID(Reg, IF_Buffer_Pre, Stall[2], StopFlag),
               EX(ID_Buffer_Pre, Stall[3], StopFlag),
-              MEM(Mem, EX_Buffer_Pre, pcNext, Stall[4], StopFlag, IF_ID_EX_ClearFlag),
+              MEM(Mem, Pred, EX_Buffer_Pre, pcNext, Stall[4], StopFlag, IF_ID_EX_ClearFlag),
               WB(Reg, MEM_Buffer_Pre, Stall[5], StopFlag)
               { memset(Stall, 0, sizeof(Stall)); }
 
@@ -83,7 +62,7 @@ namespace CPU
                 printf("\n--------------------\n");
                 printf("\n[Register]");
                 bool DEBUG_FLAG = false;
-                for(int i = 0; i < 32; ++i) if(Reg.Load(i)) DEBUG_FLAG = true, printf("\n%s: %d", RegTable[i].c_str(), Reg.Load(i));
+                for(int i = 0; i < 32; ++i) if(Reg.Load(i)) DEBUG_FLAG = true, printf("\n%s: %d", REGISTER::RegTable[i].c_str(), Reg.Load(i));
                 if(!DEBUG_FLAG) printf("\nAll Register is 0!");
                 printf("\n");
 #endif
@@ -136,16 +115,16 @@ namespace CPU
                     ID_Buffer_Pre.rv2 = EX_Buffer_Pre.exr;
 
 #ifdef RISC_V_DEBUG
-                printf("\n[IF_Buffer]   %s\n", InsTable[IF_Buffer_Pre.InsType].c_str());
-                if(IF_Buffer_Pre.InsType) printf("pc: %x\nrd: %s\nimm: %d\nrs1: %s\nrs2: %s\nRegNum: %d\n", IF_Buffer_Pre.pc, RegTable[IF_Buffer_Pre.rd].c_str(), IF_Buffer_Pre.imm, RegTable[IF_Buffer_Pre.rs1].c_str(), RegTable[IF_Buffer_Pre.rs2].c_str(), IF_Buffer_Pre.RegNum);
-                printf("\n[ID_Buffer]   %s\n", InsTable[ID_Buffer_Pre.InsType].c_str());
-                if(ID_Buffer_Pre.InsType) printf("pc: %x\nrd: %s\nimm: %d\nrs1: %s\nrs2: %s\nrv1: %d\nrv2: %d\n", ID_Buffer_Pre.pc, RegTable[ID_Buffer_Pre.rd].c_str(), ID_Buffer_Pre.imm, RegTable[ID_Buffer_Pre.rs1].c_str(), RegTable[ID_Buffer_Pre.rs2].c_str(), ID_Buffer_Pre.rv1, ID_Buffer_Pre.rv2);
-                printf("\n[EX_Buffer]   %s\n", InsTable[EX_Buffer_Pre.InsType].c_str());
-                if(EX_Buffer_Pre.InsType) printf("pc: %x\nrd: %s\nexr: %d\nad: %d\n", EX_Buffer_Pre.pc, RegTable[EX_Buffer_Pre.rd].c_str(), EX_Buffer_Pre.exr, EX_Buffer_Pre.ad);
-                printf("\n[MEM_Buffer]  %s\n", InsTable[MEM_Buffer_Pre.InsType].c_str());
-                if(MEM_Buffer_Pre.InsType) printf("pc: %x\nrd: %s\nexr: %d\n", MEM_Buffer_Pre.pc, RegTable[MEM_Buffer_Pre.rd].c_str(), MEM_Buffer_Pre.exr);
-                printf("\n[WB_Buffer]   %s\n", InsTable[WB_Buffer_Pre.InsType].c_str());
-                if(WB_Buffer_Pre.InsType) printf("pc: %x\nrd: %s\nexr: %d\n", WB_Buffer_Pre.pc, RegTable[WB_Buffer_Pre.rd].c_str(), WB_Buffer_Pre.exr);
+                printf("\n[IF_Buffer]   %s\n", INSTRUCTION::InsTable[IF_Buffer_Pre.InsType].c_str());
+                if(IF_Buffer_Pre.InsType) printf("pc: %x\nrd: %s\nimm: %d\nrs1: %s\nrs2: %s\nRegNum: %d\n", IF_Buffer_Pre.pc, REGISTER::RegTable[IF_Buffer_Pre.rd].c_str(), IF_Buffer_Pre.imm, REGISTER::RegTable[IF_Buffer_Pre.rs1].c_str(), REGISTER::RegTable[IF_Buffer_Pre.rs2].c_str(), IF_Buffer_Pre.RegNum);
+                printf("\n[ID_Buffer]   %s\n", INSTRUCTION::InsTable[ID_Buffer_Pre.InsType].c_str());
+                if(ID_Buffer_Pre.InsType) printf("pc: %x\nrd: %s\nimm: %d\nrs1: %s\nrs2: %s\nrv1: %d\nrv2: %d\n", ID_Buffer_Pre.pc, REGISTER::RegTable[ID_Buffer_Pre.rd].c_str(), ID_Buffer_Pre.imm, REGISTER::RegTable[ID_Buffer_Pre.rs1].c_str(), REGISTER::RegTable[ID_Buffer_Pre.rs2].c_str(), ID_Buffer_Pre.rv1, ID_Buffer_Pre.rv2);
+                printf("\n[EX_Buffer]   %s\n", INSTRUCTION::InsTable[EX_Buffer_Pre.InsType].c_str());
+                if(EX_Buffer_Pre.InsType) printf("pc: %x\nrd: %s\nexr: %d\nad: %d\n", EX_Buffer_Pre.pc, REGISTER::RegTable[EX_Buffer_Pre.rd].c_str(), EX_Buffer_Pre.exr, EX_Buffer_Pre.ad);
+                printf("\n[MEM_Buffer]  %s\n", INSTRUCTION::InsTable[MEM_Buffer_Pre.InsType].c_str());
+                if(MEM_Buffer_Pre.InsType) printf("pc: %x\nrd: %s\nexr: %d\n", MEM_Buffer_Pre.pc, REGISTER::RegTable[MEM_Buffer_Pre.rd].c_str(), MEM_Buffer_Pre.exr);
+                printf("\n[WB_Buffer]   %s\n", INSTRUCTION::InsTable[WB_Buffer_Pre.InsType].c_str());
+                if(WB_Buffer_Pre.InsType) printf("pc: %x\nrd: %s\nexr: %d\n", WB_Buffer_Pre.pc, REGISTER::RegTable[WB_Buffer_Pre.rd].c_str(), WB_Buffer_Pre.exr);
                 printf("\n--------------------\n");
 #endif
             }
@@ -154,6 +133,7 @@ namespace CPU
             u32 ans = Reg.Load(10) & 0xFFu;
             printf("\n\nANS: %d\n", ans);
 #endif
+            //Pred.PrintResult();
             return Reg.Load(10) & 0xFFu;
         }
     };
