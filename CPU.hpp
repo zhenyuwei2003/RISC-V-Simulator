@@ -31,7 +31,7 @@ namespace CPU
     private:
         MEMORY::Memory Mem;
         REGISTER::Register Reg;
-        u32 pc, pcNew;
+        int pc, pcNext;
         u32 StopFlag;
         u32 Stall[6];
         bool IF_ID_EX_ClearFlag;
@@ -51,11 +51,11 @@ namespace CPU
 
     public:
         explicit CPU(istream &InputStream)
-            : Mem(InputStream), pc(0), pcNew(-1), StopFlag(false), IF_ID_EX_ClearFlag(false), StallFlag(false),
-              IF(Mem, pc, pcNew, Stall[1], StopFlag),
+            : Mem(InputStream), pc(0), pcNext(-1), StopFlag(false), IF_ID_EX_ClearFlag(false), StallFlag(false),
+              IF(Mem, pc, pcNext, Stall[1], StopFlag),
               ID(Reg, IF_Buffer_Pre, Stall[2], StopFlag),
               EX(ID_Buffer_Pre, Stall[3], StopFlag),
-              MEM(Mem, EX_Buffer_Pre, pcNew, Stall[4], StopFlag, IF_ID_EX_ClearFlag),
+              MEM(Mem, EX_Buffer_Pre, pcNext, Stall[4], StopFlag, IF_ID_EX_ClearFlag),
               WB(Reg, MEM_Buffer_Pre, Stall[5], StopFlag)
               { memset(Stall, 0, sizeof(Stall)); }
 
@@ -74,8 +74,8 @@ namespace CPU
 
                 WB.execute();
                 EX.execute();
-                IF.execute();
                 MEM.execute();
+                IF.execute();
                 ID.execute();
                 if(StopFlag) ++StopFlag;
 
@@ -90,7 +90,7 @@ namespace CPU
 
                 if(StopFlag >= 5) break;
 
-                if(pcNew != -1) pc = pcNew, pcNew = -1;
+                if(pcNext != -1) pc = pcNext, pcNext = -1;
                 if(StallFlag)
                 {
                     StallFlag = false;

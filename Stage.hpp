@@ -12,14 +12,13 @@ namespace STAGE
     public:
         BUFFER::IF_Buffer Buffer;
         MEMORY::Memory &Mem;
-        u32 &pc;
-        u32 &pcNew;
+        int &pc, &pcNext;
         u32 &Stall;
         u32 &StopFlag;
         bool NOPFlag;
 
-        explicit stageIF(MEMORY::Memory &Mem_param, u32 &pc_param, u32 &pcNew_param, u32 &Stall_param, u32 &StopFlag_param)
-            : Mem(Mem_param), pc(pc_param), pcNew(pcNew_param), Stall(Stall_param), StopFlag(StopFlag_param), NOPFlag(false) {}
+        explicit stageIF(MEMORY::Memory &Mem_param, int &pc_param, int &pcNext_param, u32 &Stall_param, u32 &StopFlag_param)
+            : Mem(Mem_param), pc(pc_param), pcNext(pcNext_param), Stall(Stall_param), StopFlag(StopFlag_param), NOPFlag(false) {}
 
         void execute()
         {
@@ -35,13 +34,21 @@ namespace STAGE
             if(Buffer.InsType == INSTRUCTION::NOP) { NOPFlag = true; MEMORY::DEBUGprintf("\n[IF] NOP"); return; }
 
             NOPFlag = false;
-            if(pcNew == -1)
+            if(pcNext == -1)
             {
                 if(!INSTRUCTION::IsJump(Buffer.InsType) && !INSTRUCTION::IsBranch(Buffer.InsType))
-                    pcNew = pc + 4;
+                {
+                    pcNext = pc + 4;
+                    Buffer.pcPredict = -1;
+                }
                 else
-                    pcNew = pc + 4; // predictPC TODO
+                {
+                    pcNext = pc + 4; // predictPC TODO
+                    Buffer.pcPredict = pc + 4;
+                }
             }
+
+
         }
     };
 
@@ -71,6 +78,7 @@ namespace STAGE
             Buffer.imm = preBuffer.imm;
             Buffer.rs1 = preBuffer.rs1;
             Buffer.rs2 = preBuffer.rs2;
+            Buffer.pcPredict = preBuffer.pcPredict;
 
             switch(preBuffer.RegNum)
             {
@@ -115,6 +123,7 @@ namespace STAGE
             Buffer.pc = preBuffer.pc;
             Buffer.InsType = preBuffer.InsType;
             Buffer.rd = preBuffer.rd;
+            Buffer.pcPredict = preBuffer.pcPredict;
 
             u32 rv1 = preBuffer.rv1, rv2 = preBuffer.rv2, imm = preBuffer.imm, pc = Buffer.pc;
             switch(Buffer.InsType)
@@ -283,14 +292,14 @@ namespace STAGE
         BUFFER::EX_Buffer &preBuffer;
         BUFFER::MEM_Buffer Buffer;
         MEMORY::Memory &Mem;
-        u32 &pcNew;
+        int &pcNext;
         u32 &Stall;
         u32 &StopFlag;
         bool &IF_ID_EX_ClearFlag;
         bool NOPFlag;
 
-        explicit stageMEM(MEMORY::Memory &Mem_param, BUFFER::EX_Buffer &preBuffer_param, u32 &pcNew_param, u32 &Stall_param, u32 &StopFlag_param, bool &IF_ID_EX_ClearFlag_param)
-            : preBuffer(preBuffer_param), Mem(Mem_param), pcNew(pcNew_param), Stall(Stall_param), StopFlag(StopFlag_param), IF_ID_EX_ClearFlag(IF_ID_EX_ClearFlag_param), NOPFlag(false) {}
+        explicit stageMEM(MEMORY::Memory &Mem_param, BUFFER::EX_Buffer &preBuffer_param, int &pcNext_param, u32 &Stall_param, u32 &StopFlag_param, bool &IF_ID_EX_ClearFlag_param)
+            : preBuffer(preBuffer_param), Mem(Mem_param), pcNext(pcNext_param), Stall(Stall_param), StopFlag(StopFlag_param), IF_ID_EX_ClearFlag(IF_ID_EX_ClearFlag_param), NOPFlag(false) {}
 
         void execute()
         {
@@ -341,13 +350,14 @@ namespace STAGE
                 case INSTRUCTION::BNE:
                 case INSTRUCTION::JAL:
                 case INSTRUCTION::JALR:
-                    if(pcNew - 12 != Buffer.pc)
+                    if(preBuffer.pcPredict != Buffer.pc)
                     {
-                        pcNew = Buffer.pc;
+                        pcNext = Buffer.pc;
                         IF_ID_EX_ClearFlag = true;
                         StopFlag = 0;
                     }
                     break;
+                default: break;
             }
         }
     };

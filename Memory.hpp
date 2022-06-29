@@ -11,7 +11,7 @@ using u32 = unsigned int;
 
 const u32 SIZE = 200000;
 
-#define RISC_V_DEBUG
+//#define RISC_V_DEBUG
 
 namespace MEMORY
 {
