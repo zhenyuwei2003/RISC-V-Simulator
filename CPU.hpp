@@ -74,8 +74,8 @@ namespace CPU
 
                 WB.execute();
                 EX.execute();
-                MEM.execute();
                 IF.execute();
+                MEM.execute();
                 ID.execute();
                 if(StopFlag) ++StopFlag;
 
