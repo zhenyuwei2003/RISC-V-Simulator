@@ -71,12 +71,13 @@ namespace CPU
                 printf("NowPC: %x\n", pc);
                 printf("StopFlag: %d", StopFlag);
 #endif
-                IF.execute();
-                ID.execute();
-                EX.execute();
+
                 MEM.execute();
                 WB.execute();
-
+                EX.execute();
+                IF.execute();
+                ID.execute();
+                
 #ifdef RISC_V_DEBUG
                 printf("\n--------------------\n");
                 printf("\n[Register]");
