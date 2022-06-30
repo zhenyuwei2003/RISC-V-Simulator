@@ -20,7 +20,7 @@ namespace MEMORY
     public:
         unsigned char Data[SIZE];
 
-        explicit Memory(istream &Input)
+        explicit Memory(istream &Input) // NOLINT
         {
             memset(Data, 0, sizeof(Data));
             string InputString;
@@ -61,13 +61,6 @@ namespace MEMORY
             }
         }
     };
-
-    void DEBUGprintf(const char* s)
-    {
-#ifdef RISC_V_DEBUG
-        printf("%s", s);
-#endif
-    }
 }
 
 #endif // RISC_V_SIMULATOR_MEMORY

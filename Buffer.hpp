@@ -3,86 +3,80 @@
 
 #include "Instruction.hpp"
 
+using namespace INSTRUCTION;
+
 namespace BUFFER
 {
     struct IF_Buffer
     {
         u32 pc = 0;
-        INSTRUCTION::INS_TYPE InsType = INSTRUCTION::NOP;
-        u32 rd = 0;
-        u32 imm = 0;
-        u32 rs1 = 0;
-        u32 rs2 = 0;
-        u32 RegNum = 0;
-        int pcPredict = 0;
+        u32 pcPredict = 0;
+        u32 Ins = 0;
 
-        void Clear()
-        {
-            pc = rd = imm = rs1 = rs2 = RegNum = pcPredict = 0;
-            InsType = INSTRUCTION::NOP;
-        }
+        void Clear() { pc = Ins = pcPredict = 0; }
     };
 
     struct ID_Buffer
     {
         u32 pc = 0;
-        INSTRUCTION::INS_TYPE InsType = INSTRUCTION::NOP;
+        u32 pcPredict = 0;
+        INS_TYPE InsType = NOP;
         u32 rd = 0;
         u32 imm = 0;
         u32 rs1 = 0;
         u32 rs2 = 0;
         u32 rv1 = 0;
         u32 rv2 = 0;
-        int pcPredict = 0;
 
         void Clear()
         {
             pc = rd = imm = rs1 = rs2 = rv1 = rv2 = pcPredict = 0;
-            InsType = INSTRUCTION::NOP;
+            InsType = NOP;
         }
     };
 
     struct EX_Buffer
     {
         u32 pc = 0;
-        INSTRUCTION::INS_TYPE InsType = INSTRUCTION::NOP;
+        u32 pcNext = 0;
+        u32 pcPredict = 0;
+        INS_TYPE InsType = NOP;
         u32 rd = 0;
         u32 exr = 0; // Execute Result
         u32 ad = 0;  // Address Destination
-        int pcPredict = 0;
 
         void Clear()
         {
-            pc = rd = exr = ad = pcPredict = 0;
-            InsType = INSTRUCTION::NOP;
+            pc = pcNext = rd = exr = ad = pcPredict = 0;
+            InsType = NOP;
         }
     };
 
     struct MEM_Buffer
     {
         u32 pc = 0;
-        INSTRUCTION::INS_TYPE InsType = INSTRUCTION::NOP;
+        INS_TYPE InsType = NOP;
         u32 rd = 0;
         u32 exr = 0;
 
         void Clear()
         {
             pc = rd = exr = 0;
-            InsType = INSTRUCTION::NOP;
+            InsType = NOP;
         }
     };
 
     struct WB_Buffer
     {
         u32 pc = 0;
-        INSTRUCTION::INS_TYPE InsType = INSTRUCTION::NOP;
+        INS_TYPE InsType = NOP;
         u32 rd = 0;
         u32 exr = 0;
 
         void Clear()
         {
             pc = rd = exr = 0;
-            InsType = INSTRUCTION::NOP;
+            InsType = NOP;
         }
     };
 } // namespace BUFFER
