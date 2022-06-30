@@ -28,23 +28,22 @@ namespace PREDICTOR
         void NextPredict(u32 pc, u32 Ins, u32 &pcNext, u32 &pcPredict)
         {
             u32 opcode = (Ins & 0b00000000'00000000'00000000'01111111u);
-            if((opcode & 0b1000000u) == 0)
+            if ((opcode & 0b1000000u) == 0)
             {
                 pcNext = pc + 4;
                 pcPredict = 0;
                 return;
             }
 
-            ++ToTalNum;
-            if(opcode == 0b1101111u) // JAL
+            if (opcode == 0b1101111u) // JAL
             {
                 pcNext = pcPredict = pcAddress[pc];
             }
-            if(opcode == 0b1100111u) // JALR
+            if (opcode == 0b1100111u) // JALR
             {
                 pcNext = pcPredict = pcAddress[pc];
             }
-            if(opcode == 0b1100011u) // Branch
+            if (opcode == 0b1100011u) // Branch
             {
                 if (TwoBitCounter[pc] & 0b10u)
                     pcNext = pcPredict = pcAddress[pc];
@@ -53,9 +52,13 @@ namespace PREDICTOR
             }
         }
 
-        void Update(u32 pc, u32 pcNext, u32 pcPredict)
+        void Update(u32 pc, u32 pcNext, u32 pcPredict, INS_TYPE InsType)
         {
-            if (pcNext == pcPredict) ++CorrectNum;
+            if (IsBranch(InsType))
+            {
+                ++ToTalNum;
+                if (pcNext == pcPredict) ++CorrectNum;
+            }
             if (pcNext == pc + 4) // not taken
             {
                 if (TwoBitCounter[pc]) --TwoBitCounter[pc];
@@ -69,8 +72,8 @@ namespace PREDICTOR
 
         void PrintResult() const
         {
-            printf("Total: %d, Correct: %d\n", ToTalNum, CorrectNum);
-            printf("Prediction Correct Rate: %lf\n", (double)CorrectNum / ToTalNum);
+            printf("PredictTotal: %d\nPredictCorrect: %d\n", ToTalNum, CorrectNum);
+            printf("Predict Correct Rate: %lf%%\n", 100 * (double)CorrectNum / ToTalNum);
         }
     };
 } // namespace PREDICTOR

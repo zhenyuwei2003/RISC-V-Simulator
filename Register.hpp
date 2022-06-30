@@ -8,7 +8,7 @@ using u32 = unsigned int;
 
 namespace REGISTER
 {
-    string RegTable[] = // NOLINT
+    const string RegTable[] =
     {
         "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
         "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
@@ -27,7 +27,7 @@ namespace REGISTER
         u32 Load(u32 index) { return Data[index]; }
         void Store(u32 index, u32 data)
         {
-            if(!index) return;
+            if (!index) return;
             Data[index] = data;
         }
     };

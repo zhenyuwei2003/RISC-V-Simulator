@@ -8,7 +8,7 @@ using u32 = unsigned int;
 
 namespace INSTRUCTION
 {
-    const string InsTable[] = // NOLINT
+    const string InsTable[] =
     {
         "NOP", "ADD", "ADDI", "AND", "ANDI", "AUIPC", "BEQ", "BGE",
         "BGEU", "BLT", "BLTU", "BNE", "JAL", "JALR", "LB", "LBU",
@@ -25,24 +25,24 @@ namespace INSTRUCTION
         AND,   // R   AND
         ANDI,  // I   AND Immediate
         AUIPC, // U   Add Upper Immediate to PC
-        BEQ,   // SB  IsBranch EQual
-        BGE,   // SB  IsBranch Greater than or Equal
-        BGEU,  // SB  IsBranch Greater than or Equal Unsigned
-        BLT,   // SB  IsBranch Less Than
-        BLTU,  // SB  IsBranch Less Than Unsigned
-        BNE,   // SB  IsBranch Not Equal
-        JAL,   // UJ  IsJump And Link
-        JALR,  // I   IsJump And Link Register
-        LB,    // I   IsLoad Byte
-        LBU,   // I   IsLoad Byte Unsigned
-        LH,    // I   IsLoad Halfword
-        LHU,   // I   IsLoad Halfword Unsigned
-        LUI,   // U   IsLoad Upper Immediate
-        LW,    // I   IsLoad Word
+        BEQ,   // SB  Branch EQual
+        BGE,   // SB  Branch Greater than or Equal
+        BGEU,  // SB  Branch Greater than or Equal Unsigned
+        BLT,   // SB  Branch Less Than
+        BLTU,  // SB  Branch Less Than Unsigned
+        BNE,   // SB  Branch Not Equal
+        JAL,   // UJ  Jump And Link
+        JALR,  // I   Jump And Link Register
+        LB,    // I   Load Byte
+        LBU,   // I   Load Byte Unsigned
+        LH,    // I   Load Halfword
+        LHU,   // I   Load Halfword Unsigned
+        LUI,   // U   Load Upper Immediate
+        LW,    // I   Load Word
         OR,    // R   OR
         ORI,   // I   OR Immediate
-        SB,    // S   IsStore Byte
-        SH,    // S   IsStore Halfword
+        SB,    // S   Store Byte
+        SH,    // S   Store Halfword
         SLL,   // R   Shift Left
         SLLI,  // I   Shift Left Immediate
         SLT,   // R   Set Less Than
@@ -54,7 +54,7 @@ namespace INSTRUCTION
         SRL,   // R   Shift Right
         SRLI,  // I   Shift Right Immediate
         SUB,   // R   SUBtract
-        SW,    // S   IsStore Word
+        SW,    // S   Store Word
         XOR,   // R   XOR
         XORI   // I   XOR Immediate
     };
@@ -85,7 +85,7 @@ namespace INSTRUCTION
         u32 opcode, funct3, funct7;
         opcode = (Ins & 0b00000000'00000000'00000000'01111111u);
 
-        switch(opcode)
+        switch (opcode)
         {
             // R
             case 0b0110011u:
@@ -96,19 +96,19 @@ namespace INSTRUCTION
                 rs2     = (Ins & 0b00000001'11110000'00000000'00000000u) >> 20u;
                 imm     = 0;
                 RegNum = 2;
-                switch(funct3)
+                switch (funct3)
                 {
                     case 0b000u:
-                        if(funct7 == 0b0000000u) InsType = ADD;
-                        if(funct7 == 0b0100000u) InsType = SUB;
+                        if (funct7 == 0b0000000u) InsType = ADD;
+                        if (funct7 == 0b0100000u) InsType = SUB;
                         break;
                     case 0b001u: InsType = SLL; break;
                     case 0b010u: InsType = SLT; break;
                     case 0b011u: InsType = SLTU; break;
                     case 0b100u: InsType = XOR; break;
                     case 0b101u:
-                        if(funct7 == 0b0000000u) InsType = SRL;
-                        if(funct7 == 0b0100000u) InsType = SRA;
+                        if (funct7 == 0b0000000u) InsType = SRL;
+                        if (funct7 == 0b0100000u) InsType = SRA;
                         break;
                     case 0b110u: InsType = OR; break;
                     case 0b111u: InsType = AND; break;
@@ -125,7 +125,7 @@ namespace INSTRUCTION
                 imm     = (Ins & 0b11111111'11110000'00000000'00000000u) >> 20u; // 31:20 -> 11:0
                 SignExtend(imm, 11);
                 RegNum = 1;
-                switch(funct3)
+                switch (funct3)
                 {
                     case 0b000u: InsType = LB; break;
                     case 0b001u: InsType = LH; break;
@@ -145,7 +145,7 @@ namespace INSTRUCTION
                 imm     = (Ins & 0b11111111'11110000'00000000'00000000u) >> 20u; // 31:20 -> 11:0
                 SignExtend(imm, 11);
                 RegNum = 1;
-                switch(funct3)
+                switch (funct3)
                 {
                     case 0b000u: InsType = ADDI; break;
                     case 0b001u: InsType = SLLI; break;
@@ -172,7 +172,7 @@ namespace INSTRUCTION
                 InsType = JALR;
                 break;
 
-                // S
+            // S
             case 0b0100011u:
                 funct3  = (Ins & 0b00000000'00000000'01110000'00000000u) >> 12u;
                 rd      = 0;
@@ -182,7 +182,7 @@ namespace INSTRUCTION
                 imm    |= (Ins & 0b00000000'00000000'00001111'10000000u) >> 7u;  // 11:7  -> 4:0
                 SignExtend(imm, 11);
                 RegNum = 2;
-                switch(funct3)
+                switch (funct3)
                 {
                     case 0b000u: InsType = SB; break;
                     case 0b001u: InsType = SH; break;
@@ -203,7 +203,7 @@ namespace INSTRUCTION
                 imm    |= (Ins & 0b00000000'00000000'00000000'10000000u) << 4u;  // 7     -> 11
                 SignExtend(imm, 12);
                 RegNum = 2;
-                switch(funct3)
+                switch (funct3)
                 {
                     case 0b000u: InsType = BEQ; break;
                     case 0b001u: InsType = BNE; break;

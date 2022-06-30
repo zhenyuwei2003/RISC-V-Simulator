@@ -13,4 +13,5 @@ add_executable(code
         Register.hpp
         CPU.hpp
         Predictor.hpp
+        LocalTest.h
 )
