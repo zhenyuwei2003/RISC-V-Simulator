@@ -139,7 +139,7 @@ namespace CPU
             u32 ans = Reg.Load(10) & 0xFFu;
             printf("\n\nANS: %d\n", ans);
 #endif
-            Pred.PrintResult();
+            //Pred.PrintResult();
             return Reg.Load(10) & 0xFFu;
         }
     };
