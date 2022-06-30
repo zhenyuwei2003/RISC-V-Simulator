@@ -10,7 +10,7 @@ using namespace BUFFER;
 using namespace PREDICTOR;
 
 //#define RISC_V_DEBUG
-#define RISC_V_PRINT
+//#define RISC_V_PRINT
 
 namespace CPU
 {
