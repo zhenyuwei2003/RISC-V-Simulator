@@ -18,9 +18,9 @@
 - `ID (Instruction Decode)`
     - 指令解码，读取寄存器
 - `EX (EXecute)`
-    - 获取计算结果、目标内存地址(Load/Store)、下条指令地址(Jump/Branch)，更新预测器
+    - 获取计算结果、目标内存地址（Load/Store）、下条指令地址（Jump/Branch），更新预测器
 - `MEM (MEMory access)`
-    - 写入/读取内存地址(Load/Store)
+    - 写入/读取内存地址（Load/Store）
 - `WB (Write Back)`
     - 写入寄存器
 
@@ -41,9 +41,9 @@
 ## 潜在问题及解决方案
 
 - `Data Hazard`
-    - **问题：** 当前指令的 `rs` 是前三条指令的 `rd` （尚未写入寄存器）
+    - **问题：** 当前指令的 `rs` 是前三条指令的 `rd` （尚未将新值写入寄存器）
     - **解决方案：** **Forwarding**，即将之前指令计算后存在对应 `Buffer` 中的值复制到当前指令的 `Buffer` 中
-    - **问题：** 当前指令的 `rs` 上条指令(Load)的 `rd` （尚未从内存中读取寄存器的值）
+    - **问题：** 当前指令的 `rs` 是上条指令（Load）的 `rd` （尚未从内存中读取寄存器的值）
     - **解决方案：** **Stall**，即将 `IF、ID、EX` 暂停一个时钟周期，对应 `Buffer` 的值保留
 - `Control Hazard`
     - **问题：** 分支预测结果错误
