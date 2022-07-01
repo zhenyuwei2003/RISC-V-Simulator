@@ -2,7 +2,7 @@
 #define RISC_V_SIMULATOR_CPU
 
 #include "Stage.hpp"
-//#include "LocalTest.h"
+#include "LocalTest.h"
 
 using namespace MEMORY;
 using namespace REGISTER;
@@ -20,8 +20,8 @@ namespace CPU
         Predictor Pred;
 
         u32 pc, pcNext;
-        u32 StopCnt, BubbleCnt, Stall_IF, Stall_ID, Stall_EX;
-        bool IF_ID_DiscardFlag, HazardStallFlag;
+        u32 StopCnt, BubbleCnt;
+        bool HazardStallFlag, StallFlag_IF, StallFlag_ID, StallFlag_EX, IF_ID_DiscardFlag;
 
         stageIF IF;
         stageID ID;
@@ -38,10 +38,10 @@ namespace CPU
     public:
         explicit CPU(istream &InputStream)
             : Mem(InputStream), pc(0), pcNext(0), StopCnt(0), BubbleCnt(0),
-              Stall_IF(0), Stall_ID(0), Stall_EX(0), IF_ID_DiscardFlag(false), HazardStallFlag(false),
-              IF(Mem, Pred, pc, pcNext, Stall_IF, StopCnt),
-              ID(IF_Buffer_Pre, Reg, Stall_ID, StopCnt),
-              EX(ID_Buffer_Pre, Pred, pcNext, Stall_EX, StopCnt, IF_ID_DiscardFlag),
+              HazardStallFlag(false), StallFlag_IF(false), StallFlag_ID(false), StallFlag_EX(false), IF_ID_DiscardFlag(false),
+              IF(Mem, Pred, pc, pcNext, StopCnt, StallFlag_IF),
+              ID(IF_Buffer_Pre, Reg, StopCnt, StallFlag_ID),
+              EX(ID_Buffer_Pre, Pred, pcNext, StopCnt, StallFlag_EX, IF_ID_DiscardFlag),
               MEM(EX_Buffer_Pre, Mem, StopCnt),
               WB(MEM_Buffer_Pre, Reg)
               {}
@@ -56,9 +56,9 @@ namespace CPU
 
                 IF.execute();
                 ID.execute();
+                WB.execute();
                 EX.execute();
                 MEM.execute();
-                WB.execute();
 
                 if (StopCnt) ++StopCnt;
                 if (StopCnt == 5) break;
@@ -103,7 +103,7 @@ namespace CPU
                 // Bubble/Stall
                 if (MEM.BubbleFlag) BubbleCnt = 2;
                 if (IsLoad(EX_Buffer_Pre.InsType) && (ID_Buffer_Pre.rs1 == EX_Buffer_Pre.rd || ID_Buffer_Pre.rs2 == EX_Buffer_Pre.rd))
-                    ++Stall_IF, ++Stall_ID, ++Stall_EX, HazardStallFlag = true;
+                    StallFlag_IF = StallFlag_ID = StallFlag_EX = true, HazardStallFlag = true;
 
                 // forwarding (WB.Buffer -> ID.Buffer)
                 if (ID_Buffer_Pre.rs1 && ID_Buffer_Pre.rs1 == WB_Buffer_Pre.rd && IsRegEdit(WB_Buffer_Pre.InsType))
@@ -159,7 +159,8 @@ namespace CPU
             }
 
 #ifdef RISC_V_PRINT
-            printf("CLK: %u\n", CLK);
+//            printf("CLK: %u\n", CLK);
+            printf("%u\t", CLK);
             Pred.PrintResult();
 #endif
             return Reg.Load(10) & 0xFFu;

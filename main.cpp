@@ -5,14 +5,15 @@ int main()
 #ifdef RISC_V_SIMULATOR_LOCAL_TEST
     for (int i = 0; i < 18; ++i)
     {
-        printf("[%s]\n", FileTable[i].c_str());
+//        printf("[%s]\n", FileTable[i].c_str());
+        printf("%s\t", FileTable[i].c_str());
         ifstream IN("testcases/" + FileTable[i] + ".data");
         CPU::CPU cpu(IN);
         u32 Ans = cpu.run();
-        printf("Ans: %u\n", Ans);
-        printf("%s\n\n", Ans == AnsTable[i] ? "Correct!" : "Wrong!");
+//        printf("Ans: %u\n", Ans);
+//        printf("%s\n\n", Ans == AnsTable[i] ? "Correct!" : "Wrong!");
     }
-    printf("Average Correct Rate: %lf%%\n", ToTalCorrectRate / 17);
+//    printf("Average Correct Rate: %lf%%\n", ToTalCorrectRate / 17);
     return 0;
 #endif
 

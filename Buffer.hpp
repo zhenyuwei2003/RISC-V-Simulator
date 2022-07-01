@@ -42,8 +42,8 @@ namespace BUFFER
         u32 pcNext = 0;
         u32 pcPredict = 0;
         u32 rd = 0;
-        u32 exr = 0; // Execute Result
-        u32 ad = 0;  // Address Destination
+        u32 exr = 0;
+        u32 ad = 0;
 
         void Clear()
         {

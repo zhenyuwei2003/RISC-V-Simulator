@@ -22,24 +22,24 @@ namespace STAGE
         Predictor &Pred;
 
         u32 &pc, &pcNext;
-        u32 &Stall, &StopCnt;
-        bool NOPFlag;
+        u32 &StopCnt;
+        bool &StallFlag, NOPFlag;
 
-        explicit stageIF(Memory &Mem_, Predictor &Pred_, u32 &pc_, u32 &pcNext_, u32 &Stall_, u32 &StopCnt_)
-            : Mem(Mem_), Pred(Pred_), pc(pc_), pcNext(pcNext_), Stall(Stall_), StopCnt(StopCnt_), NOPFlag(false) {}
+        explicit stageIF(Memory &Mem_, Predictor &Pred_, u32 &pc_, u32 &pcNext_, u32 &StopCnt_, bool &StallFlag_)
+            : Mem(Mem_), Pred(Pred_), pc(pc_), pcNext(pcNext_), StopCnt(StopCnt_), StallFlag(StallFlag_), NOPFlag(false) {}
 
         void execute()
         {
             NOPFlag = true;
             if (StopCnt >= 2) return;
-            if (Stall) { --Stall; return; }
+            if (StallFlag) { StallFlag = false; return; }
             NOPFlag = false;
 
             Buffer.pc = pc;
             Buffer.Ins = Mem.Load(pc, 4);
             if (Buffer.Ins == 0x0FF00513) StopCnt = 1;
 
-            Pred.NextPredict(Buffer.pc, Buffer.Ins, pcNext, Buffer.pcPredict);
+            if(!pcNext) Pred.NextPredict(Buffer.pc, Buffer.Ins, pcNext, Buffer.pcPredict);
         }
     };
 
@@ -50,17 +50,17 @@ namespace STAGE
         ID_Buffer Buffer;
         Register &Reg;
 
-        u32 &Stall, &StopCnt;
-        bool NOPFlag;
+        u32 &StopCnt;
+        bool &StallFlag, NOPFlag;
 
-        explicit stageID(IF_Buffer &preBuffer_, Register &Reg_, u32 &Stall_, u32 &StopCnt_)
-            : preBuffer(preBuffer_), Reg(Reg_), Stall(Stall_), StopCnt(StopCnt_), NOPFlag(false) {}
+        explicit stageID(IF_Buffer &preBuffer_, Register &Reg_, u32 &StopCnt_, bool &StallFlag_)
+            : preBuffer(preBuffer_), Reg(Reg_), StopCnt(StopCnt_), StallFlag(StallFlag_), NOPFlag(false) {}
 
         void execute()
         {
             NOPFlag = true;
             if (StopCnt >= 3) return;
-            if (Stall) { --Stall; return; }
+            if (StallFlag) { StallFlag = false; return; }
             NOPFlag = false;
 
             u32 RegNum = 0;
@@ -96,18 +96,18 @@ namespace STAGE
         EX_Buffer Buffer;
         Predictor &Pred;
 
-        u32 &pcNext, &Stall, &StopCnt;
-        bool &IF_ID_DiscardFlag, NOPFlag;
+        u32 &pcNext, &StopCnt;
+        bool &StallFlag, &IF_ID_DiscardFlag, NOPFlag;
 
-        explicit stageEX(ID_Buffer &preBuffer_, Predictor &Pred_, u32 &pcNext_, u32 &Stall_, u32 &StopCnt_, bool &IF_ID_DiscardFlag_)
-            : preBuffer(preBuffer_), Pred(Pred_), pcNext(pcNext_), Stall(Stall_), StopCnt(StopCnt_), IF_ID_DiscardFlag(IF_ID_DiscardFlag_), NOPFlag(false) {};
+        explicit stageEX(ID_Buffer &preBuffer_, Predictor &Pred_, u32 &pcNext_, u32 &StopCnt_, bool &StallFlag_, bool &IF_ID_DiscardFlag_)
+            : preBuffer(preBuffer_), Pred(Pred_), pcNext(pcNext_), StopCnt(StopCnt_), StallFlag(StallFlag_), IF_ID_DiscardFlag(IF_ID_DiscardFlag_), NOPFlag(false) {};
 
         void execute()
         {
             NOPFlag = true;
             if (StopCnt >= 4) return;
             if (preBuffer.InsType == INSTRUCTION::NOP) return;
-            if (Stall) { --Stall; return; }
+            if (StallFlag) { StallFlag = false; return; }
             NOPFlag = false;
 
             Buffer.pc = preBuffer.pc;
