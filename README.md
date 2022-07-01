@@ -68,7 +68,8 @@
 - **Memory.hpp**
     - `Memory` 类
         - **成员变量**
-            - `Data[]` 每一位存1 Byte的数据的数组
+            - `Data[]`
+                - 每一位存1 Byte的数据的数组
         - **成员函数**
             - `构造函数`：读取输入数据存入 `Data` 中
             - `Load()`：读取 `pos` 开始 `len` 个Byte的数据
@@ -78,7 +79,8 @@
         - `RISC-V` 寄存器名称表
     - `Register` 类
         - **成员变量**
-            - `Data[32]` 32个32位寄存器
+            - `Data[32]`
+                - 32个32位寄存器
         - **成员函数**
             - `Load()`：读取第 `index` 个寄存器的数据
             - `Store()`：将 `val` 写入第 `index` 个寄存器中（特判zero寄存器不可修改）
@@ -91,12 +93,18 @@
 - **Predictor.hpp**
     - `Predictor` 类
         - **成员变量**
-            - `TotalNum`,`CorrectNum` 用于记录预测准确率
-            - `Counter[]` 记录指令的预测次数，用于决策预测方法
-            - `BTB[]` Branch Target Buffer，记录跳转地址
-            - `BHT[]` Branch History Table，记录历史跳转模式
-            - `PHT[][]` Pattern History Table，每条指令特定模式的四位饱和计数器
-            - `TwoBitCounter[]` 每条指令简单的四位饱和计数器
+            - `TotalNum`,`CorrectNum`
+                - 用于记录预测准确率
+            - `Counter[]`
+                - 记录指令的预测次数，用于决策预测方法
+            - `BTB[]`
+                - Branch Target Buffer，记录跳转地址
+            - `BHT[]`
+                - Branch History Table，记录历史跳转模式
+            - `PHT[][]`
+                - Pattern History Table，每条指令特定模式的四位饱和计数器
+            - `TwoBitCounter[]`
+                - 每条指令简单的四位饱和计数器
         - **成员函数**
             - `构造函数`：初始化将所有四位饱和设置为 `not taken` 情况下的最大值，将 `BTB[]` 设置为对应 `pc` 地址+4
             - `NextPredict()`：预测下条指令地址，修改 `pcNext` 和 `pcPredict` 的值
