@@ -13,11 +13,16 @@
 
 ## 五级流水
 
-- `IF (Instruction Fetch)` 内存中读取指令，分支预测
-- `ID (Instruction Decode)` 指令解码，读取寄存器
-- `EX (EXecute)` 获取计算结果、目标内存地址(Load/Store)、下条指令地址(Jump/Branch)，更新预测器
-- `MEM (MEMory access)` 写入/读取内存地址(Load/Store)
-- `WB (Write Back)` 写入寄存器
+- `IF (Instruction Fetch)`
+    - 内存中读取指令，分支预测
+- `ID (Instruction Decode)`
+    - 指令解码，读取寄存器
+- `EX (EXecute)`
+    - 获取计算结果、目标内存地址(Load/Store)、下条指令地址(Jump/Branch)，更新预测器
+- `MEM (MEMory access)`
+    - 写入/读取内存地址(Load/Store)
+- `WB (Write Back)`
+    - 写入寄存器
 
 ### 缩写说明
 
