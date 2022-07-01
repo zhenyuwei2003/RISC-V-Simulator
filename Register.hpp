@@ -25,11 +25,7 @@ namespace REGISTER
         Register() { memset(Data, 0, sizeof(Data)); }
 
         u32 Load(u32 index) { return Data[index]; }
-        void Store(u32 index, u32 data)
-        {
-            if (!index) return;
-            Data[index] = data;
-        }
+        void Store(u32 index, u32 data) { if (index) Data[index] = data; }
     };
 } // namespace REGISTER
 

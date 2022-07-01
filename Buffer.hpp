@@ -18,9 +18,9 @@ namespace BUFFER
 
     struct ID_Buffer
     {
+        INS_TYPE InsType = NOP;
         u32 pc = 0;
         u32 pcPredict = 0;
-        INS_TYPE InsType = NOP;
         u32 rd = 0;
         u32 imm = 0;
         u32 rs1 = 0;
@@ -37,10 +37,10 @@ namespace BUFFER
 
     struct EX_Buffer
     {
+        INS_TYPE InsType = NOP;
         u32 pc = 0;
         u32 pcNext = 0;
         u32 pcPredict = 0;
-        INS_TYPE InsType = NOP;
         u32 rd = 0;
         u32 exr = 0; // Execute Result
         u32 ad = 0;  // Address Destination
@@ -54,8 +54,8 @@ namespace BUFFER
 
     struct MEM_Buffer
     {
-        u32 pc = 0;
         INS_TYPE InsType = NOP;
+        u32 pc = 0;
         u32 rd = 0;
         u32 exr = 0;
 
@@ -68,8 +68,8 @@ namespace BUFFER
 
     struct WB_Buffer
     {
-        u32 pc = 0;
         INS_TYPE InsType = NOP;
+        u32 pc = 0;
         u32 rd = 0;
         u32 exr = 0;
 

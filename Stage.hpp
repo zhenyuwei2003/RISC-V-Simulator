@@ -94,12 +94,13 @@ namespace STAGE
     public:
         ID_Buffer &preBuffer;
         EX_Buffer Buffer;
+        Predictor &Pred;
 
-        u32 &Stall, &StopCnt;
-        bool NOPFlag;
+        u32 &pcNext, &Stall, &StopCnt;
+        bool &IF_ID_DiscardFlag, NOPFlag;
 
-        explicit stageEX(ID_Buffer &preBuffer_, u32 &Stall_, u32 &StopCnt_)
-            : preBuffer(preBuffer_), Stall(Stall_), StopCnt(StopCnt_), NOPFlag(false) {};
+        explicit stageEX(ID_Buffer &preBuffer_, Predictor &Pred_, u32 &pcNext_, u32 &Stall_, u32 &StopCnt_, bool &IF_ID_DiscardFlag_)
+            : preBuffer(preBuffer_), Pred(Pred_), pcNext(pcNext_), Stall(Stall_), StopCnt(StopCnt_), IF_ID_DiscardFlag(IF_ID_DiscardFlag_), NOPFlag(false) {};
 
         void execute()
         {
@@ -273,6 +274,16 @@ namespace STAGE
                 default:
                     printf("[EX] InsType ERROR!\n");
             }
+            if(IsBranch(Buffer.InsType) || IsJump(Buffer.InsType))
+            {
+                Pred.Update(Buffer.pc, Buffer.pcNext, Buffer.pcPredict, Buffer.InsType);
+                if (Buffer.pcPredict != Buffer.pcNext)
+                {
+                    pcNext = Buffer.pcNext;
+                    IF_ID_DiscardFlag = true;
+                    StopCnt = 0;
+                }
+            }
         }
     };
 
@@ -282,20 +293,18 @@ namespace STAGE
         EX_Buffer &preBuffer;
         MEM_Buffer Buffer;
         Memory &Mem;
-        Predictor &Pred;
 
-        u32 &pcNext, &Stall, &StopCnt;
-        bool &IF_ID_EX_DiscardFlag, BubbleFlag, NOPFlag;
+        u32 &StopCnt;
+        bool BubbleFlag, NOPFlag;
 
-        explicit stageMEM(EX_Buffer &preBuffer_, Memory &Mem_, Predictor &Pred_, u32 &pcNext_, u32 &Stall_, u32 &StopCnt_, bool &IF_ID_EX_DiscardFlag_)
-            : preBuffer(preBuffer_), Mem(Mem_), Pred(Pred_), pcNext(pcNext_), Stall(Stall_), StopCnt(StopCnt_), IF_ID_EX_DiscardFlag(IF_ID_EX_DiscardFlag_), BubbleFlag(false), NOPFlag(false) {}
+        explicit stageMEM(EX_Buffer &preBuffer_, Memory &Mem_, u32 &StopCnt_)
+            : preBuffer(preBuffer_), Mem(Mem_), StopCnt(StopCnt_), BubbleFlag(false), NOPFlag(false) {}
 
         void execute()
         {
             NOPFlag = true;
             if (StopCnt >= 5) return;
             if (preBuffer.InsType == NOP) return;
-            if (Stall) { --Stall; return; }
             NOPFlag = false;
 
             Buffer.pc = preBuffer.pc;
@@ -333,23 +342,6 @@ namespace STAGE
                 case SW:
                     Mem.Store(preBuffer.ad, 4, Buffer.exr);
                     break;
-                case BEQ:
-                case BGE:
-                case BGEU:
-                case BLT:
-                case BLTU:
-                case BNE:
-                case JAL:
-                case JALR:
-                    BubbleFlag = false;
-                    Pred.Update(Buffer.pc, preBuffer.pcNext, preBuffer.pcPredict, Buffer.InsType);
-                    if (preBuffer.pcPredict != preBuffer.pcNext)
-                    {
-                        pcNext = preBuffer.pcNext;
-                        IF_ID_EX_DiscardFlag = true;
-                        StopCnt = 0;
-                    }
-                    break;
                 default:
                     BubbleFlag = false;
                     break;
@@ -363,17 +355,15 @@ namespace STAGE
         MEM_Buffer &preBuffer;
         WB_Buffer Buffer;
         Register &Reg;
-        u32 &Stall;
         bool NOPFlag;
 
-        explicit stageWB(MEM_Buffer &preBuffer_, Register &Reg_, u32 &Stall_)
-            : preBuffer(preBuffer_), Reg(Reg_), Stall(Stall_), NOPFlag(false) {}
+        explicit stageWB(MEM_Buffer &preBuffer_, Register &Reg_)
+            : preBuffer(preBuffer_), Reg(Reg_), NOPFlag(false) {}
 
         void execute()
         {
             NOPFlag = true;
             if (preBuffer.InsType == NOP) return;
-            if (Stall) { --Stall; return; }
             NOPFlag = false;
 
             Buffer.pc = preBuffer.pc;

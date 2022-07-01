@@ -19,7 +19,7 @@ namespace MEMORY
     public:
         unsigned char Data[SIZE];
 
-        explicit Memory(istream &Input) // NOLINT
+        explicit Memory(istream &Input)
         {
             memset(Data, 0, sizeof(Data));
             string InputString;

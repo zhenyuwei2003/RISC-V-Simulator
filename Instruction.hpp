@@ -4,6 +4,7 @@
 #include <iostream>
 
 using std::string;
+using u8 = unsigned char;
 using u32 = unsigned int;
 
 namespace INSTRUCTION

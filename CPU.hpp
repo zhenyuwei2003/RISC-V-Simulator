@@ -2,15 +2,13 @@
 #define RISC_V_SIMULATOR_CPU
 
 #include "Stage.hpp"
+//#include "LocalTest.h"
 
 using namespace MEMORY;
 using namespace REGISTER;
 using namespace STAGE;
 using namespace BUFFER;
 using namespace PREDICTOR;
-
-//#define RISC_V_DEBUG
-//#define RISC_V_PRINT
 
 namespace CPU
 {
@@ -22,8 +20,8 @@ namespace CPU
         Predictor Pred;
 
         u32 pc, pcNext;
-        u32 StopCnt, BubbleCnt, Stall[6];
-        bool IF_ID_EX_DiscardFlag, HazardStallFlag;
+        u32 StopCnt, BubbleCnt, Stall_IF, Stall_ID, Stall_EX;
+        bool IF_ID_DiscardFlag, HazardStallFlag;
 
         stageIF IF;
         stageID ID;
@@ -39,22 +37,22 @@ namespace CPU
 
     public:
         explicit CPU(istream &InputStream)
-            : Mem(InputStream), pc(0), pcNext(0), StopCnt(0), BubbleCnt(0), IF_ID_EX_DiscardFlag(false), HazardStallFlag(false),
-              IF(Mem, Pred, pc, pcNext, Stall[1], StopCnt),
-              ID(IF_Buffer_Pre, Reg, Stall[2], StopCnt),
-              EX(ID_Buffer_Pre, Stall[3], StopCnt),
-              MEM(EX_Buffer_Pre, Mem, Pred, pcNext, Stall[4], StopCnt, IF_ID_EX_DiscardFlag),
-              WB(MEM_Buffer_Pre, Reg, Stall[5])
-              { memset(Stall, 0, sizeof(Stall)); }
+            : Mem(InputStream), pc(0), pcNext(0), StopCnt(0), BubbleCnt(0),
+              Stall_IF(0), Stall_ID(0), Stall_EX(0), IF_ID_DiscardFlag(false), HazardStallFlag(false),
+              IF(Mem, Pred, pc, pcNext, Stall_IF, StopCnt),
+              ID(IF_Buffer_Pre, Reg, Stall_ID, StopCnt),
+              EX(ID_Buffer_Pre, Pred, pcNext, Stall_EX, StopCnt, IF_ID_DiscardFlag),
+              MEM(EX_Buffer_Pre, Mem, StopCnt),
+              WB(MEM_Buffer_Pre, Reg)
+              {}
 
-        int run()
+        u32 run()
         {
             u32 CLK = 0;
             while (true)
             {
                 ++CLK;
-                if (BubbleCnt)
-                { --BubbleCnt; continue; }
+                if (BubbleCnt) { --BubbleCnt; continue; }
 
                 IF.execute();
                 ID.execute();
@@ -78,15 +76,15 @@ namespace CPU
                 }
                 else
                 {
-                    if (IF.NOPFlag || IF_ID_EX_DiscardFlag)
+                    if (IF.NOPFlag || IF_ID_DiscardFlag)
                         IF_Buffer_Pre.Clear();
                     else
                         IF_Buffer_Pre = IF.Buffer;
-                    if (ID.NOPFlag || IF_ID_EX_DiscardFlag)
+                    if (ID.NOPFlag || IF_ID_DiscardFlag)
                         ID_Buffer_Pre.Clear();
                     else
                         ID_Buffer_Pre = ID.Buffer;
-                    if (EX.NOPFlag || IF_ID_EX_DiscardFlag)
+                    if (EX.NOPFlag)
                         EX_Buffer_Pre.Clear();
                     else
                         EX_Buffer_Pre = EX.Buffer;
@@ -99,55 +97,63 @@ namespace CPU
                     else
                         WB_Buffer_Pre = WB.Buffer;
 
-                    IF_ID_EX_DiscardFlag = false;
+                    IF_ID_DiscardFlag = false;
                 }
 
+                // Bubble/Stall
                 if (MEM.BubbleFlag) BubbleCnt = 2;
                 if (IsLoad(EX_Buffer_Pre.InsType) && (ID_Buffer_Pre.rs1 == EX_Buffer_Pre.rd || ID_Buffer_Pre.rs2 == EX_Buffer_Pre.rd))
-                    ++Stall[1], ++Stall[2], ++Stall[3], HazardStallFlag = true;
+                    ++Stall_IF, ++Stall_ID, ++Stall_EX, HazardStallFlag = true;
 
-                // forwarding (B5->B2)
-                if (IsRegEdit(WB_Buffer_Pre.InsType) && ID_Buffer_Pre.rs1 && ID_Buffer_Pre.rs1 == WB_Buffer_Pre.rd)
+                // forwarding (WB.Buffer -> ID.Buffer)
+                if (ID_Buffer_Pre.rs1 && ID_Buffer_Pre.rs1 == WB_Buffer_Pre.rd && IsRegEdit(WB_Buffer_Pre.InsType))
                     ID_Buffer_Pre.rv1 = WB_Buffer_Pre.exr;
-                if (IsRegEdit(WB_Buffer_Pre.InsType) && ID_Buffer_Pre.rs2 && ID_Buffer_Pre.rs2 == WB_Buffer_Pre.rd)
+                if (ID_Buffer_Pre.rs2 && ID_Buffer_Pre.rs2 == WB_Buffer_Pre.rd && IsRegEdit(WB_Buffer_Pre.InsType))
                     ID_Buffer_Pre.rv2 = WB_Buffer_Pre.exr;
 
-                // forwarding (B4->B2)
-                if (IsRegEdit(MEM_Buffer_Pre.InsType) && ID_Buffer_Pre.rs1 && ID_Buffer_Pre.rs1 == MEM_Buffer_Pre.rd)
+                // forwarding (MEM.Buffer -> ID.Buffer)
+                if (ID_Buffer_Pre.rs1 && ID_Buffer_Pre.rs1 == MEM_Buffer_Pre.rd && IsRegEdit(MEM_Buffer_Pre.InsType))
                     ID_Buffer_Pre.rv1 = MEM_Buffer_Pre.exr;
-                if (IsRegEdit(MEM_Buffer_Pre.InsType) && ID_Buffer_Pre.rs2 && ID_Buffer_Pre.rs2 == MEM_Buffer_Pre.rd)
+                if (ID_Buffer_Pre.rs2 && ID_Buffer_Pre.rs2 == MEM_Buffer_Pre.rd && IsRegEdit(MEM_Buffer_Pre.InsType))
                     ID_Buffer_Pre.rv2 = MEM_Buffer_Pre.exr;
 
-                // forwarding (B3->B2)
-                if (IsRegEdit(EX_Buffer_Pre.InsType) && ID_Buffer_Pre.rs1 && ID_Buffer_Pre.rs1 == EX_Buffer_Pre.rd)
+                // forwarding (EX.Buffer -> ID.Buffer)
+                if (ID_Buffer_Pre.rs1 && ID_Buffer_Pre.rs1 == EX_Buffer_Pre.rd && IsRegEdit(EX_Buffer_Pre.InsType))
                     ID_Buffer_Pre.rv1 = EX_Buffer_Pre.exr;
-                if (IsRegEdit(EX_Buffer_Pre.InsType) && ID_Buffer_Pre.rs2 && ID_Buffer_Pre.rs2 == EX_Buffer_Pre.rd)
+                if (ID_Buffer_Pre.rs2 && ID_Buffer_Pre.rs2 == EX_Buffer_Pre.rd && IsRegEdit(EX_Buffer_Pre.InsType))
                     ID_Buffer_Pre.rv2 = EX_Buffer_Pre.exr;
 
 #ifdef RISC_V_DEBUG
                 printf("\n[Register]");
                 bool DEBUG_REG_FLAG = false;
-                for(u32 i = 0; i < 32; ++i)
-                    if(Reg.Load(i))
+                for (u32 i = 0; i < 32; ++i)
+                    if (Reg.Load(i))
                         DEBUG_REG_FLAG = true,
                                 printf("\n%s: %d", RegTable[i].c_str(), Reg.Load(i));
-                if(!DEBUG_REG_FLAG)
+                if (!DEBUG_REG_FLAG)
                     printf("\nAll Register is 0!");
                 printf("\n");
+
                 printf("\n[IF_Buffer]\n");
-                printf("pc: %x\npcPredict: %x\nIns: 0x%08x\n", IF_Buffer_Pre.pc, IF_Buffer_Pre.pcPredict, IF_Buffer_Pre.Ins);
+                if (IF_Buffer_Pre.Ins) printf("pc: %x\npcPredict: %x\nIns: 0x%08x\n", IF_Buffer_Pre.pc, IF_Buffer_Pre.pcPredict, IF_Buffer_Pre.Ins);
+                else printf("Empty!\n");
+
                 printf("\n[ID_Buffer]\n");
-                if(ID_Buffer_Pre.InsType)printf("InsType: %s\npc: %x\nrd: %s\nimm: %d\nrs1: %s\nrs2: %s\nrv1: %d\nrv2: %d\n", InsTable[ID_Buffer_Pre.InsType].c_str(), ID_Buffer_Pre.pc, RegTable[ID_Buffer_Pre.rd].c_str(), ID_Buffer_Pre.imm, RegTable[ID_Buffer_Pre.rs1].c_str(), RegTable[ID_Buffer_Pre.rs2].c_str(), ID_Buffer_Pre.rv1, ID_Buffer_Pre.rv2);
+                if (ID_Buffer_Pre.InsType)printf("InsType: %s\npc: %x\nrd: %s\nimm: %d\nrs1: %s\nrs2: %s\nrv1: %d\nrv2: %d\n", InsTable[ID_Buffer_Pre.InsType].c_str(), ID_Buffer_Pre.pc, RegTable[ID_Buffer_Pre.rd].c_str(), ID_Buffer_Pre.imm, RegTable[ID_Buffer_Pre.rs1].c_str(), RegTable[ID_Buffer_Pre.rs2].c_str(), ID_Buffer_Pre.rv1, ID_Buffer_Pre.rv2);
                 else printf("Empty!\n");
+
                 printf("\n[EX_Buffer]\n");
-                if(EX_Buffer_Pre.InsType) printf("InsType: %s\npc: %x\nrd: %s\nexr: %d\nad: %d\n", InsTable[EX_Buffer_Pre.InsType].c_str(), EX_Buffer_Pre.pc, RegTable[EX_Buffer_Pre.rd].c_str(), EX_Buffer_Pre.exr, EX_Buffer_Pre.ad);
+                if (EX_Buffer_Pre.InsType) printf("InsType: %s\npc: %x\nrd: %s\nexr: %d\nad: %d\n", InsTable[EX_Buffer_Pre.InsType].c_str(), EX_Buffer_Pre.pc, RegTable[EX_Buffer_Pre.rd].c_str(), EX_Buffer_Pre.exr, EX_Buffer_Pre.ad);
                 else printf("Empty!\n");
+
                 printf("\n[MEM_Buffer]\n");
-                if(MEM_Buffer_Pre.InsType) printf("InsType: %s\npc: %x\nrd: %s\nexr: %d\n", InsTable[MEM_Buffer_Pre.InsType].c_str(), MEM_Buffer_Pre.pc, RegTable[MEM_Buffer_Pre.rd].c_str(), MEM_Buffer_Pre.exr);
+                if (MEM_Buffer_Pre.InsType) printf("InsType: %s\npc: %x\nrd: %s\nexr: %d\n", InsTable[MEM_Buffer_Pre.InsType].c_str(), MEM_Buffer_Pre.pc, RegTable[MEM_Buffer_Pre.rd].c_str(), MEM_Buffer_Pre.exr);
                 else printf("Empty!\n");
+
                 printf("\n[WB_Buffer]\n");
-                if(WB_Buffer_Pre.InsType) printf("InsType: %s\npc: %x\nrd: %s\nexr: %d\n", InsTable[WB_Buffer_Pre.InsType].c_str(), WB_Buffer_Pre.pc, RegTable[WB_Buffer_Pre.rd].c_str(), WB_Buffer_Pre.exr);
+                if (WB_Buffer_Pre.InsType) printf("InsType: %s\npc: %x\nrd: %s\nexr: %d\n", InsTable[WB_Buffer_Pre.InsType].c_str(), WB_Buffer_Pre.pc, RegTable[WB_Buffer_Pre.rd].c_str(), WB_Buffer_Pre.exr);
                 else printf("Empty!\n");
+
                 printf("\n----------\n");
 #endif
             }
