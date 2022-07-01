@@ -107,8 +107,9 @@
     - `SignExtend()`
         - 指令符号位扩展
     - `InsDecode()`
-        - 指令解码，获得 `InsType`,`rd`,`imm`,`rs1`,`rs2`,`RegNum`
+        - 指令解码，获得 `InsType`, `rd`, `imm`, `rs1`, `rs2`, `RegNum`
 - **LocalTest.hpp**
+    - 在OJ上评测时注释 `CPU.hpp` 中的 `#include "LocalTest.h"` 即可 `AC`
     - `#define RISC_V_DEBUG`
         - 取消注释会打印每个测试点每个时钟周期结束后寄存器与 `Buffer` 中的数据
     - `#define RISC_V_PRINT`

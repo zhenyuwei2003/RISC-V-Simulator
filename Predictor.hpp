@@ -239,12 +239,9 @@ namespace PREDICTOR
 
         void PrintResult() const
         {
-//            printf("PredictTotal: %d\nPredictCorrect: %d\n", ToTalNum, CorrectNum);
-//            if (ToTalNum) printf("Predict Correct Rate: %lf%%\n", 100 * (double)CorrectNum / ToTalNum);
-//            else printf("Predict Correct Rate: /\n");
-            printf("%d\t%d\t", ToTalNum, CorrectNum);
-            if (ToTalNum) printf("%lf%%\t\n", 100 * (double)CorrectNum / ToTalNum);
-            else printf("/\t\n");
+            printf("PredictTotal: %d\nPredictCorrect: %d\n", ToTalNum, CorrectNum);
+            if (ToTalNum) printf("Predict Correct Rate: %lf%%\n", 100 * (double)CorrectNum / ToTalNum);
+            else printf("Predict Correct Rate: /\n");
         }
     };
 } // namespace PREDICTOR

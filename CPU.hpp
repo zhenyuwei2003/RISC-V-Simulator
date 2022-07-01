@@ -2,7 +2,7 @@
 #define RISC_V_SIMULATOR_CPU
 
 #include "Stage.hpp"
-#include "LocalTest.h"
+//#include "LocalTest.h"
 
 using namespace MEMORY;
 using namespace REGISTER;
@@ -159,8 +159,7 @@ namespace CPU
             }
 
 #ifdef RISC_V_PRINT
-//            printf("CLK: %u\n", CLK);
-            printf("%u\t", CLK);
+            printf("CLK: %u\n", CLK);
             Pred.PrintResult();
 #endif
             return Reg.Load(10) & 0xFFu;
