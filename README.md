@@ -14,7 +14,7 @@
 
 ## 五级流水
 
-![架构设计图](Pipeline Architecture.png)
+![架构设计图](Pipeline_Architecture.png)
 
 - `IF (Instruction Fetch)`
     - 消耗一个时钟周期
