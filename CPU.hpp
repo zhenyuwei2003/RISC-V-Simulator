@@ -23,11 +23,11 @@ namespace CPU
         u32 StopCnt, BubbleCnt;
         bool HazardStallFlag, StallFlag_IF, StallFlag_ID, StallFlag_EX, IF_ID_DiscardFlag;
 
-        stageIF IF;
-        stageID ID;
-        stageEX EX;
-        stageMEM MEM;
-        stageWB WB;
+        StageIF IF;
+        StageID ID;
+        StageEX EX;
+        StageMEM MEM;
+        StageWB WB;
 
         IF_Buffer IF_Buffer_Pre;
         ID_Buffer ID_Buffer_Pre;
@@ -102,25 +102,25 @@ namespace CPU
 
                 // Bubble/Stall
                 if (MEM.BubbleFlag) BubbleCnt = 2;
-                if (IsLoad(EX_Buffer_Pre.InsType) && (ID_Buffer_Pre.rs1 == EX_Buffer_Pre.rd || ID_Buffer_Pre.rs2 == EX_Buffer_Pre.rd))
+                if (IsLoad(EX_Buffer_Pre.InsType) && (ID.rs1 == EX_Buffer_Pre.rd || ID.rs2 == EX_Buffer_Pre.rd))
                     StallFlag_IF = StallFlag_ID = StallFlag_EX = true, HazardStallFlag = true;
 
                 // forwarding (WB.Buffer -> ID.Buffer)
-                if (ID_Buffer_Pre.rs1 && ID_Buffer_Pre.rs1 == WB_Buffer_Pre.rd && IsRegEdit(WB_Buffer_Pre.InsType))
+                if (ID.rs1 && ID.rs1 == WB_Buffer_Pre.rd && IsRegEdit(WB_Buffer_Pre.InsType))
                     ID_Buffer_Pre.rv1 = WB_Buffer_Pre.exr;
-                if (ID_Buffer_Pre.rs2 && ID_Buffer_Pre.rs2 == WB_Buffer_Pre.rd && IsRegEdit(WB_Buffer_Pre.InsType))
+                if (ID.rs2 && ID.rs2 == WB_Buffer_Pre.rd && IsRegEdit(WB_Buffer_Pre.InsType))
                     ID_Buffer_Pre.rv2 = WB_Buffer_Pre.exr;
 
                 // forwarding (MEM.Buffer -> ID.Buffer)
-                if (ID_Buffer_Pre.rs1 && ID_Buffer_Pre.rs1 == MEM_Buffer_Pre.rd && IsRegEdit(MEM_Buffer_Pre.InsType))
+                if (ID.rs1 && ID.rs1 == MEM_Buffer_Pre.rd && IsRegEdit(MEM_Buffer_Pre.InsType))
                     ID_Buffer_Pre.rv1 = MEM_Buffer_Pre.exr;
-                if (ID_Buffer_Pre.rs2 && ID_Buffer_Pre.rs2 == MEM_Buffer_Pre.rd && IsRegEdit(MEM_Buffer_Pre.InsType))
+                if (ID.rs2 && ID.rs2 == MEM_Buffer_Pre.rd && IsRegEdit(MEM_Buffer_Pre.InsType))
                     ID_Buffer_Pre.rv2 = MEM_Buffer_Pre.exr;
 
                 // forwarding (EX.Buffer -> ID.Buffer)
-                if (ID_Buffer_Pre.rs1 && ID_Buffer_Pre.rs1 == EX_Buffer_Pre.rd && IsRegEdit(EX_Buffer_Pre.InsType))
+                if (ID.rs1 && ID.rs1 == EX_Buffer_Pre.rd && IsRegEdit(EX_Buffer_Pre.InsType))
                     ID_Buffer_Pre.rv1 = EX_Buffer_Pre.exr;
-                if (ID_Buffer_Pre.rs2 && ID_Buffer_Pre.rs2 == EX_Buffer_Pre.rd && IsRegEdit(EX_Buffer_Pre.InsType))
+                if (ID.rs2 && ID.rs2 == EX_Buffer_Pre.rd && IsRegEdit(EX_Buffer_Pre.InsType))
                     ID_Buffer_Pre.rv2 = EX_Buffer_Pre.exr;
 
 #ifdef RISC_V_DEBUG

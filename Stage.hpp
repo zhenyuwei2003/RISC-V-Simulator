@@ -14,7 +14,7 @@ using namespace INSTRUCTION;
 
 namespace STAGE
 {
-    class stageIF
+    class StageIF
     {
     public:
         IF_Buffer Buffer;
@@ -25,7 +25,7 @@ namespace STAGE
         u32 &StopCnt;
         bool &StallFlag, NOPFlag;
 
-        explicit stageIF(Memory &Mem_, Predictor &Pred_, u32 &pc_, u32 &pcNext_, u32 &StopCnt_, bool &StallFlag_)
+        explicit StageIF(Memory &Mem_, Predictor &Pred_, u32 &pc_, u32 &pcNext_, u32 &StopCnt_, bool &StallFlag_)
             : Mem(Mem_), Pred(Pred_), pc(pc_), pcNext(pcNext_), StopCnt(StopCnt_), StallFlag(StallFlag_), NOPFlag(false) {}
 
         void execute()
@@ -43,18 +43,18 @@ namespace STAGE
         }
     };
 
-    class stageID
+    class StageID
     {
     public:
         IF_Buffer &preBuffer;
         ID_Buffer Buffer;
         Register &Reg;
 
-        u32 &StopCnt;
+        u32 &StopCnt, rs1, rs2;
         bool &StallFlag, NOPFlag;
 
-        explicit stageID(IF_Buffer &preBuffer_, Register &Reg_, u32 &StopCnt_, bool &StallFlag_)
-            : preBuffer(preBuffer_), Reg(Reg_), StopCnt(StopCnt_), StallFlag(StallFlag_), NOPFlag(false) {}
+        explicit StageID(IF_Buffer &preBuffer_, Register &Reg_, u32 &StopCnt_, bool &StallFlag_)
+            : preBuffer(preBuffer_), Reg(Reg_), StopCnt(StopCnt_), rs1(0), rs2(0), StallFlag(StallFlag_), NOPFlag(false) {}
 
         void execute()
         {
@@ -66,7 +66,7 @@ namespace STAGE
             u32 RegNum = 0;
             Buffer.pc = preBuffer.pc;
             Buffer.pcPredict = preBuffer.pcPredict;
-            InsDecode(preBuffer.Ins, Buffer.InsType, Buffer.rd, Buffer.imm, Buffer.rs1, Buffer.rs2, RegNum);
+            InsDecode(preBuffer.Ins, Buffer.InsType, Buffer.rd, Buffer.imm, rs1, rs2, RegNum);
 
             switch (RegNum)
             {
@@ -75,12 +75,12 @@ namespace STAGE
                     Buffer.rv2 = 0;
                     break;
                 case 1:
-                    Buffer.rv1 = Reg.Load(Buffer.rs1);
+                    Buffer.rv1 = Reg.Load(rs1);
                     Buffer.rv2 = 0;
                     break;
                 case 2:
-                    Buffer.rv1 = Reg.Load(Buffer.rs1);
-                    Buffer.rv2 = Reg.Load(Buffer.rs2);
+                    Buffer.rv1 = Reg.Load(rs1);
+                    Buffer.rv2 = Reg.Load(rs2);
                     break;
                 default:
                     printf("RegNum ERROR!\n");
@@ -89,18 +89,18 @@ namespace STAGE
         }
     };
 
-    class stageEX
+    class StageEX
     {
     public:
         ID_Buffer &preBuffer;
         EX_Buffer Buffer;
         Predictor &Pred;
 
-        u32 &pcNext, &StopCnt;
+        u32 &pcNext, pcNextTmp, &StopCnt;
         bool &StallFlag, &IF_ID_DiscardFlag, NOPFlag;
 
-        explicit stageEX(ID_Buffer &preBuffer_, Predictor &Pred_, u32 &pcNext_, u32 &StopCnt_, bool &StallFlag_, bool &IF_ID_DiscardFlag_)
-            : preBuffer(preBuffer_), Pred(Pred_), pcNext(pcNext_), StopCnt(StopCnt_), StallFlag(StallFlag_), IF_ID_DiscardFlag(IF_ID_DiscardFlag_), NOPFlag(false) {};
+        explicit StageEX(ID_Buffer &preBuffer_, Predictor &Pred_, u32 &pcNext_, u32 &StopCnt_, bool &StallFlag_, bool &IF_ID_DiscardFlag_)
+            : preBuffer(preBuffer_), Pred(Pred_), pcNext(pcNext_), pcNextTmp(0), StopCnt(StopCnt_), StallFlag(StallFlag_), IF_ID_DiscardFlag(IF_ID_DiscardFlag_), NOPFlag(false) {};
 
         void execute()
         {
@@ -110,9 +110,7 @@ namespace STAGE
             if (StallFlag) { StallFlag = false; return; }
             NOPFlag = false;
 
-            Buffer.pc = preBuffer.pc;
-            Buffer.pcNext = Buffer.pc;
-            Buffer.pcPredict = preBuffer.pcPredict;
+            pcNextTmp = Buffer.pc = preBuffer.pc;
             Buffer.InsType = preBuffer.InsType;
             Buffer.rd = preBuffer.rd;
 
@@ -140,50 +138,50 @@ namespace STAGE
                     Buffer.ad = 0;
                     break;
                 case BEQ:
-                    if (rv1 == rv2) Buffer.pcNext += imm;
-                    else Buffer.pcNext += 4;
+                    if (rv1 == rv2) pcNextTmp += imm;
+                    else pcNextTmp += 4;
                     Buffer.exr = 0;
                     Buffer.ad = 0;
                     break;
                 case BGE:
-                    if ((int)rv1 >= (int)rv2) Buffer.pcNext += imm;
-                    else Buffer.pcNext += 4;
+                    if ((int)rv1 >= (int)rv2) pcNextTmp += imm;
+                    else pcNextTmp += 4;
                     Buffer.exr = 0;
                     Buffer.ad = 0;
                     break;
                 case BGEU:
-                    if(rv1 >= rv2) Buffer.pcNext += imm;
-                    else Buffer.pcNext += 4;
+                    if(rv1 >= rv2) pcNextTmp += imm;
+                    else pcNextTmp += 4;
                     Buffer.exr = 0;
                     Buffer.ad = 0;
                     break;
                 case BLT:
-                    if ((int)rv1 < (int)rv2) Buffer.pcNext += imm;
-                    else Buffer.pcNext += 4;
+                    if ((int)rv1 < (int)rv2) pcNextTmp += imm;
+                    else pcNextTmp += 4;
                     Buffer.exr = 0;
                     Buffer.ad = 0;
                     break;
                 case BLTU:
-                    if (rv1 < rv2) Buffer.pcNext += imm;
-                    else Buffer.pcNext += 4;
+                    if (rv1 < rv2) pcNextTmp += imm;
+                    else pcNextTmp += 4;
                     Buffer.exr = 0;
                     Buffer.ad = 0;
                     break;
                 case BNE:
-                    if (rv1 != rv2) Buffer.pcNext += imm;
-                    else Buffer.pcNext += 4;
+                    if (rv1 != rv2) pcNextTmp += imm;
+                    else pcNextTmp += 4;
                     Buffer.exr = 0;
                     Buffer.ad = 0;
                     break;
                 case JAL:
                     Buffer.exr = pc + 4;
                     Buffer.ad = 0;
-                    Buffer.pcNext += imm;
+                    pcNextTmp += imm;
                     break;
                 case JALR:
                     Buffer.exr = pc + 4;
                     Buffer.ad = 0;
-                    Buffer.pcNext = (rv1 + imm) & ~1;
+                    pcNextTmp = (rv1 + imm) & ~1;
                     break;
                 case LB:
                 case LBU:
@@ -276,10 +274,10 @@ namespace STAGE
             }
             if(IsBranch(Buffer.InsType) || IsJump(Buffer.InsType))
             {
-                Pred.Update(Buffer.pc, Buffer.pcNext, Buffer.pcPredict, Buffer.InsType);
-                if (Buffer.pcPredict != Buffer.pcNext)
+                Pred.Update(Buffer.pc, pcNextTmp, preBuffer.pcPredict, Buffer.InsType);
+                if (preBuffer.pcPredict != pcNextTmp)
                 {
-                    pcNext = Buffer.pcNext;
+                    pcNext = pcNextTmp;
                     IF_ID_DiscardFlag = true;
                     StopCnt = 0;
                 }
@@ -287,7 +285,7 @@ namespace STAGE
         }
     };
 
-    class stageMEM
+    class StageMEM
     {
     public:
         EX_Buffer &preBuffer;
@@ -297,7 +295,7 @@ namespace STAGE
         u32 &StopCnt;
         bool BubbleFlag, NOPFlag;
 
-        explicit stageMEM(EX_Buffer &preBuffer_, Memory &Mem_, u32 &StopCnt_)
+        explicit StageMEM(EX_Buffer &preBuffer_, Memory &Mem_, u32 &StopCnt_)
             : preBuffer(preBuffer_), Mem(Mem_), StopCnt(StopCnt_), BubbleFlag(false), NOPFlag(false) {}
 
         void execute()
@@ -349,7 +347,7 @@ namespace STAGE
         }
     };
 
-    class stageWB
+    class StageWB
     {
     public:
         MEM_Buffer &preBuffer;
@@ -357,7 +355,7 @@ namespace STAGE
         Register &Reg;
         bool NOPFlag;
 
-        explicit stageWB(MEM_Buffer &preBuffer_, Register &Reg_)
+        explicit StageWB(MEM_Buffer &preBuffer_, Register &Reg_)
             : preBuffer(preBuffer_), Reg(Reg_), NOPFlag(false) {}
 
         void execute()

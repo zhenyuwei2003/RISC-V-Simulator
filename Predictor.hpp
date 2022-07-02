@@ -31,6 +31,7 @@ namespace PREDICTOR
             memset(FourBitCounter, 0b0111u, sizeof(FourBitCounter));
             for (u32 i = 0; i < PREDICTOR_SIZE << 2; i += 4) BTB[i >> 2] = i + 4;
         }
+        ~Predictor() { if (ToTalNum) ToTalCorrectRate += 100 * (double)CorrectNum / ToTalNum; }
 
         void NextPredict(u32 pc, u32 Ins, u32 &pcNext, u32 &pcPredict)
         {
@@ -72,7 +73,6 @@ namespace PREDICTOR
             printf("PredictTotal: %d\nPredictCorrect: %d\n", ToTalNum, CorrectNum);
             if (ToTalNum) printf("Predict Correct Rate: %lf%%\n", 100 * (double)CorrectNum / ToTalNum);
             else printf("Predict Correct Rate: /\n");
-            if (ToTalNum) ToTalCorrectRate += 100 * (double)CorrectNum / ToTalNum;
         }
     };
 } // namespace PREDICTOR
@@ -102,6 +102,7 @@ namespace PREDICTOR
             memset(PHT, 0b0111u, sizeof(PHT));
             for (u32 i = 0; i < PREDICTOR_SIZE << 2; i += 4) BTB[i >> 2] = i + 4;
         }
+        ~Predictor() { if (ToTalNum) ToTalCorrectRate += 100 * (double)CorrectNum / ToTalNum; }
 
         #define pcIndex pc >> 2
 
@@ -149,7 +150,6 @@ namespace PREDICTOR
             printf("PredictTotal: %d\nPredictCorrect: %d\n", ToTalNum, CorrectNum);
             if (ToTalNum) printf("Predict Correct Rate: %lf%%\n", 100 * (double)CorrectNum / ToTalNum);
             else printf("Predict Correct Rate: /\n");
-            if (ToTalNum) ToTalCorrectRate += 100 * (double)CorrectNum / ToTalNum;
         }
     };
 } // namespace PREDICTOR
@@ -182,7 +182,6 @@ namespace PREDICTOR
             memset(FourBitCounter, 0b0111u, sizeof(FourBitCounter));
             for (u32 i = 0; i < PREDICTOR_SIZE << 2; i += 4) BTB[i >> 2] = i + 4;
         }
-
         ~Predictor() { if (ToTalNum) ToTalCorrectRate += 100 * (double)CorrectNum / ToTalNum; }
 
 #define pcIndex pc >> 2
