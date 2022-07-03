@@ -6,14 +6,47 @@
 
 using namespace INSTRUCTION;
 
+//#define STATIC_PREDICTION
 //#define FOUR_BIT_COUNTER_PREDICTION
 //#define TWO_LEVEL_PREDICTION
 #define HYBRID_BRANCH_PREDICTION
 
 double ToTalCorrectRate = 0;
 
-#ifdef FOUR_BIT_COUNTER_PREDICTION
+#ifdef STATIC_PREDICTION
+namespace PREDICTOR
+{
+    class Predictor
+    {
+    private:
+        u32 ToTalNum, CorrectNum;
 
+    public:
+        Predictor() : ToTalNum(0), CorrectNum(0) {}
+        ~Predictor() { if (ToTalNum) ToTalCorrectRate += 100 * (double)CorrectNum / ToTalNum; }
+
+        void NextPredict(u32 pc, u32 Ins, u32 &pcNext, u32 &pcPredict) { pcNext = pcPredict = pc + 4; }
+
+        void Update(u32 pc, u32 pcNext, u32 pcPredict, INS_TYPE InsType)
+        {
+            if (IsBranch(InsType))
+            {
+                ++ToTalNum;
+                if (pcNext == pcPredict) ++CorrectNum;
+            }
+        }
+
+        void PrintResult() const
+        {
+            printf("PredictTotal: %d\nPredictCorrect: %d\n", ToTalNum, CorrectNum);
+            if (ToTalNum) printf("Predict Correct Rate: %lf%%\n", 100 * (double)CorrectNum / ToTalNum);
+            else printf("Predict Correct Rate: /\n");
+        }
+    };
+} // namespace PREDICTOR
+#endif // STATIC_PREDICTION
+
+#ifdef FOUR_BIT_COUNTER_PREDICTION
 #define PREDICTOR_SIZE 1500
 
 namespace PREDICTOR
@@ -76,12 +109,9 @@ namespace PREDICTOR
         }
     };
 } // namespace PREDICTOR
-
 #endif // FOUR_BIT_COUNTER_PREDICTION
 
-
 #ifdef TWO_LEVEL_PREDICTION
-
 #define PREDICTOR_SIZE 1500
 #define BRANCH_HISTORY_SIZE 7
 
@@ -153,12 +183,9 @@ namespace PREDICTOR
         }
     };
 } // namespace PREDICTOR
-
 #endif // TWO_LEVEL_PREDICTION
 
-
 #ifdef HYBRID_BRANCH_PREDICTION
-
 #define PREDICTOR_SIZE 1500
 #define SWITCH_THRESHOLD 50
 
@@ -244,7 +271,6 @@ namespace PREDICTOR
         }
     };
 } // namespace PREDICTOR
-
 #endif // HYBRID_BRANCH_PREDICTION
 
 #endif // RISC_V_SIMULATOR_PREDICTOR
